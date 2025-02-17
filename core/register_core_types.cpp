@@ -66,6 +66,7 @@
 #include "core/io/xml_parser.h"
 #include "core/math/a_star.h"
 #include "core/math/a_star_grid_2d.h"
+#include "core/math/big_random_number_generator.h"
 #include "core/math/expression.h"
 #include "core/math/geometry_2d.h"
 #include "core/math/geometry_3d.h"
@@ -259,6 +260,7 @@ void register_core_types() {
 	GDREGISTER_CLASS(AStarGrid2D);
 	GDREGISTER_CLASS(EncodedObjectAsID);
 	GDREGISTER_CLASS(RandomNumberGenerator);
+	GDREGISTER_CLASS(BigRandomNumberGenerator);
 
 	GDREGISTER_ABSTRACT_CLASS(ImageFormatLoader);
 	GDREGISTER_CLASS(ImageFormatLoaderExtension);
