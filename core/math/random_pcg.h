@@ -36,6 +36,7 @@
 #include "thirdparty/misc/pcg.h"
 
 #include <math.h>
+#include <random>
 
 #if defined(__GNUC__)
 #define CLZ32(x) __builtin_clz(x)
@@ -68,6 +69,11 @@ class RandomPCG {
 	uint64_t current_inc = 0;
 
 public:
+	using result_type = uint32_t;
+
+	static constexpr result_type min() { return 0; }
+	static constexpr result_type max() { return UINT32_MAX; }
+
 	static const uint64_t DEFAULT_SEED = 12047754176567800795U;
 	static const uint64_t DEFAULT_INC = PCG_DEFAULT_INC_64;
 
@@ -91,6 +97,7 @@ public:
 	}
 
 	int64_t rand_weighted(const Vector<float> &p_weights);
+	uint32_t rand_poisson(uint32_t p_lambda);
 
 	// Obtaining floating point numbers in [0, 1] range with "good enough" uniformity.
 	// These functions sample the output of rand() as the fraction part of an infinite binary number,
@@ -148,6 +155,8 @@ public:
 	double random(double p_from, double p_to);
 	float random(float p_from, float p_to);
 	int random(int p_from, int p_to);
+
+	result_type operator()() { return rand(); }
 };
 
 #endif // RANDOM_PCG_H

@@ -43,6 +43,10 @@ void RandomPCG::randomize() {
 	seed(((uint64_t)OS::get_singleton()->get_unix_time() + OS::get_singleton()->get_ticks_usec()) * pcg.state + PCG_DEFAULT_INC_64);
 }
 
+uint32_t RandomPCG::rand_poisson(uint32_t p_lambda) {
+	return std::poisson_distribution<uint32_t>(p_lambda)(*this);
+}
+
 int64_t RandomPCG::rand_weighted(const Vector<float> &p_weights) {
 	ERR_FAIL_COND_V_MSG(p_weights.is_empty(), -1, "Weights array is empty.");
 	int64_t weights_size = p_weights.size();

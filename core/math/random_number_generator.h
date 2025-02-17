@@ -58,6 +58,7 @@ public:
 	_FORCE_INLINE_ int randi_range(int p_from, int p_to) { return randbase.random(p_from, p_to); }
 
 	_FORCE_INLINE_ int64_t rand_weighted(const Vector<float> &p_weights) { return randbase.rand_weighted(p_weights); }
+	_FORCE_INLINE_ uint32_t rand_poisson(uint32_t p_lambda) { return randbase.rand_poisson(p_lambda); }
 
 	RandomNumberGenerator() { randbase.randomize(); }
 };
