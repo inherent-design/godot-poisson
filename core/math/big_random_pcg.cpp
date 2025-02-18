@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  big_random_number_generator.cpp                                       */
+/*  random_pcg.cpp                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,27 +28,60 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "big_random_number_generator.h"
+#include "big_random_pcg.h"
 
-void BigRandomNumberGenerator::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_seed", "seed"), &BigRandomNumberGenerator::set_seed);
-	ClassDB::bind_method(D_METHOD("get_seed"), &BigRandomNumberGenerator::get_seed);
+#include "core/os/os.h"
+#include "core/templates/vector.h"
 
-	ClassDB::bind_method(D_METHOD("set_state", "state"), &BigRandomNumberGenerator::set_state);
-	ClassDB::bind_method(D_METHOD("get_state"), &BigRandomNumberGenerator::get_state);
+BigRandomPCG::BigRandomPCG(pcg128_t p_seed = PCG_DEFAULT_SEED_128, pcg128_t p_inc = PCG_DEFAULT_INC_128) :
+		initial_inc(p_inc) {
+	seed(p_seed);
+}
 
-	ClassDB::bind_method(D_METHOD("randi"), &BigRandomNumberGenerator::randi);
-	ClassDB::bind_method(D_METHOD("randf"), &BigRandomNumberGenerator::randf);
-	ClassDB::bind_method(D_METHOD("randfn", "mean", "deviation"), &BigRandomNumberGenerator::randfn, DEFVAL(0.0), DEFVAL(1.0));
-	ClassDB::bind_method(D_METHOD("randf_range", "from", "to"), &BigRandomNumberGenerator::randf_range);
-	ClassDB::bind_method(D_METHOD("randi_range", "from", "to"), &BigRandomNumberGenerator::randi_range);
-	ClassDB::bind_method(D_METHOD("rand_weighted", "weights"), &BigRandomNumberGenerator::rand_weighted);
-	ClassDB::bind_method(D_METHOD("rand_poisson", "lambda"), &BigRandomNumberGenerator::rand_poisson);
-	ClassDB::bind_method(D_METHOD("randomize"), &BigRandomNumberGenerator::randomize);
+void BigRandomPCG::randomize() {
+	seed(((pcg128_t)OS::get_singleton()->get_unix_time() + OS::get_singleton()->get_ticks_usec()) * get_state() + PCG_DEFAULT_INC_64);
+}
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "state"), "set_state", "get_state");
-	// Default values are non-deterministic, override for doc generation purposes.
-	ADD_PROPERTY_DEFAULT("seed", 0);
-	ADD_PROPERTY_DEFAULT("state", 0);
+uint64_t BigRandomPCG::rand_poisson(uint64_t p_lambda) {
+	return std::poisson_distribution<uint64_t>(p_lambda)(pcg);
+}
+
+int64_t BigRandomPCG::rand_weighted(const Vector<float> &p_weights) {
+	ERR_FAIL_COND_V_MSG(p_weights.is_empty(), -1, "Weights array is empty.");
+	uint64_t weights_size = p_weights.size();
+	const float *weights = p_weights.ptr();
+	float weights_sum = 0.0;
+	for (uint64_t i = 0; i < weights_size; ++i) {
+		weights_sum += weights[i];
+	}
+
+	float remaining_distance = randf() * weights_sum;
+	for (uint64_t i = 0; i < weights_size; ++i) {
+		remaining_distance -= weights[i];
+		if (remaining_distance < 0) {
+			return i;
+		}
+	}
+
+	for (uint64_t i = weights_size - 1; i >= 0; --i) {
+		if (weights[i] > 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+double BigRandomPCG::random(double p_from, double p_to) {
+	return randd() * (p_to - p_from) + p_from;
+}
+
+float BigRandomPCG::random(float p_from, float p_to) {
+	return randf() * (p_to - p_from) + p_from;
+}
+
+int BigRandomPCG::random(int p_from, int p_to) {
+	if (p_from == p_to) {
+		return p_from;
+	}
+	return rand(abs(p_from - p_to) + 1) + MIN(p_from, p_to);
 }

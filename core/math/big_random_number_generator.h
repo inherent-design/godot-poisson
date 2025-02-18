@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  big_random_number_generator.h                                             */
+/*  big_random_number_generator.h                                         */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -31,32 +31,33 @@
 #ifndef BIG_RANDOM_NUMBER_GENERATOR_H
 #define BIG_RANDOM_NUMBER_GENERATOR_H
 
-#include "core/math/random_pcg.h"
+#include "core/math/big_random_pcg.h"
 #include "core/object/ref_counted.h"
 
 class BigRandomNumberGenerator : public RefCounted {
 	GDCLASS(BigRandomNumberGenerator, RefCounted);
 
 protected:
-	RandomPCG randbase;
+	BigRandomPCG randbase;
 
 	static void _bind_methods();
 
 public:
-	_FORCE_INLINE_ void set_seed(uint64_t p_seed) { randbase.seed(p_seed); }
-	_FORCE_INLINE_ uint64_t get_seed() { return randbase.get_seed(); }
+	_FORCE_INLINE_ void set_seed(pcg128_t p_seed) { randbase.seed(p_seed); }
+	_FORCE_INLINE_ pcg128_t get_seed() { return randbase.get_seed(); }
 
-	_FORCE_INLINE_ void set_state(uint64_t p_state) { randbase.set_state(p_state); }
-	_FORCE_INLINE_ uint64_t get_state() const { return randbase.get_state(); }
+	_FORCE_INLINE_ void set_state(pcg128_t p_state) { randbase.set_state(p_state); }
+	_FORCE_INLINE_ pcg128_t get_state() const { return randbase.get_state(); }
 
 	_FORCE_INLINE_ void randomize() { randbase.randomize(); }
 
-	_FORCE_INLINE_ uint32_t randi() { return randbase.rand(); }
+	_FORCE_INLINE_ uint64_t randi() { return randbase.rand(); }
 	_FORCE_INLINE_ real_t randf() { return randbase.randf(); }
 	_FORCE_INLINE_ real_t randf_range(real_t p_from, real_t p_to) { return randbase.random(p_from, p_to); }
 	_FORCE_INLINE_ real_t randfn(real_t p_mean = 0.0, real_t p_deviation = 1.0) { return randbase.randfn(p_mean, p_deviation); }
 	_FORCE_INLINE_ int randi_range(int p_from, int p_to) { return randbase.random(p_from, p_to); }
 
+	_FORCE_INLINE_ uint64_t rand_poisson(uint64_t p_lambda) { return randbase.rand_poisson(p_lambda); }
 	_FORCE_INLINE_ int64_t rand_weighted(const Vector<float> &p_weights) { return randbase.rand_weighted(p_weights); }
 
 	BigRandomNumberGenerator() { randbase.randomize(); }
