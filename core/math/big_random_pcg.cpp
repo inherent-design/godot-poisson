@@ -33,7 +33,7 @@
 #include "core/os/os.h"
 #include "core/templates/vector.h"
 
-BigRandomPCG::BigRandomPCG(pcg128_t p_seed = PCG_DEFAULT_SEED_128, pcg128_t p_inc = PCG_DEFAULT_INC_128) :
+BigRandomPCG::BigRandomPCG(pcg128_t p_seed, pcg128_t p_inc) :
 		initial_inc(p_inc) {
 	seed(p_seed);
 }

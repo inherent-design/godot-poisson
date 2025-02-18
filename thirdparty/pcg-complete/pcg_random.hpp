@@ -331,9 +331,9 @@ template <typename xtype, typename itype,
 		bool output_previous = true,
 		typename stream_mixin = oneseq_stream<itype>,
 		typename multiplier_mixin = default_multiplier<itype>>
-class engine : protected output_mixin,
-			   public stream_mixin,
-			   protected multiplier_mixin {
+class pcg_engine : protected output_mixin,
+				   public stream_mixin,
+				   protected multiplier_mixin {
 protected:
 	itype state_;
 
@@ -423,7 +423,7 @@ public:
 		}
 	}
 
-	engine(itype state = itype(0xcafef00dd15ea5e5ULL)) :
+	pcg_engine(itype state = itype(0xcafef00dd15ea5e5ULL)) :
 			state_(this->is_mcg ? state | state_type(3U)
 								: bump(state + this->increment())) {
 		// Nothing else to do.
@@ -433,7 +433,7 @@ public:
 	// to use SFINAE; users don't have to worry about its template-ness.
 
 	template <typename sm = stream_mixin>
-	engine(itype state, typename sm::stream_state stream_seed) :
+	pcg_engine(itype state, typename sm::stream_state stream_seed) :
 			stream_mixin(stream_seed),
 			state_(this->is_mcg ? state | state_type(3U)
 								: bump(state + this->increment())) {
@@ -441,31 +441,31 @@ public:
 	}
 
 	template <typename SeedSeq>
-	engine(SeedSeq &&seedSeq, typename std::enable_if<!stream_mixin::can_specify_stream && !std::is_convertible<SeedSeq, itype>::value && !std::is_convertible<SeedSeq, engine>::value, no_specifiable_stream_tag>::type = {}) :
-			engine(generate_one<itype>(std::forward<SeedSeq>(seedSeq))) {
+	pcg_engine(SeedSeq &&seedSeq, typename std::enable_if<!stream_mixin::can_specify_stream && !std::is_convertible<SeedSeq, itype>::value && !std::is_convertible<SeedSeq, pcg_engine>::value, no_specifiable_stream_tag>::type = {}) :
+			pcg_engine(generate_one<itype>(std::forward<SeedSeq>(seedSeq))) {
 		// Nothing else to do.
 	}
 
 	template <typename SeedSeq>
-	engine(SeedSeq &&seedSeq, typename std::enable_if<stream_mixin::can_specify_stream && !std::is_convertible<SeedSeq, itype>::value && !std::is_convertible<SeedSeq, engine>::value, can_specify_stream_tag>::type = {}) :
-			engine(generate_one<itype, 1, 2>(seedSeq),
+	pcg_engine(SeedSeq &&seedSeq, typename std::enable_if<stream_mixin::can_specify_stream && !std::is_convertible<SeedSeq, itype>::value && !std::is_convertible<SeedSeq, pcg_engine>::value, can_specify_stream_tag>::type = {}) :
+			pcg_engine(generate_one<itype, 1, 2>(seedSeq),
 					generate_one<itype, 0, 2>(seedSeq)) {
 		// Nothing else to do.
 	}
 
 	template <typename... Args>
 	void seed(Args &&...args) {
-		new (this) engine(std::forward<Args>(args)...);
+		new (this) pcg_engine(std::forward<Args>(args)...);
 	}
 
 	template <typename xtype1, typename itype1,
 			typename output_mixin1, bool output_previous1,
 			typename stream_mixin_lhs, typename multiplier_mixin_lhs,
 			typename stream_mixin_rhs, typename multiplier_mixin_rhs>
-	friend bool operator==(const engine<xtype1, itype1,
+	friend bool operator==(const pcg_engine<xtype1, itype1,
 								   output_mixin1, output_previous1,
 								   stream_mixin_lhs, multiplier_mixin_lhs> &,
-			const engine<xtype1, itype1,
+			const pcg_engine<xtype1, itype1,
 					output_mixin1, output_previous1,
 					stream_mixin_rhs, multiplier_mixin_rhs> &);
 
@@ -473,10 +473,10 @@ public:
 			typename output_mixin1, bool output_previous1,
 			typename stream_mixin_lhs, typename multiplier_mixin_lhs,
 			typename stream_mixin_rhs, typename multiplier_mixin_rhs>
-	friend itype1 operator-(const engine<xtype1, itype1,
+	friend itype1 operator-(const pcg_engine<xtype1, itype1,
 									output_mixin1, output_previous1,
 									stream_mixin_lhs, multiplier_mixin_lhs> &,
-			const engine<xtype1, itype1,
+			const pcg_engine<xtype1, itype1,
 					output_mixin1, output_previous1,
 					stream_mixin_rhs, multiplier_mixin_rhs> &);
 
@@ -486,7 +486,7 @@ public:
 			typename stream_mixin1, typename multiplier_mixin1>
 	friend std::basic_ostream<CharT, Traits> &
 	operator<<(std::basic_ostream<CharT, Traits> &out,
-			const engine<xtype1, itype1,
+			const pcg_engine<xtype1, itype1,
 					output_mixin1, output_previous1,
 					stream_mixin1, multiplier_mixin1> &);
 
@@ -496,7 +496,7 @@ public:
 			typename stream_mixin1, typename multiplier_mixin1>
 	friend std::basic_istream<CharT, Traits> &
 	operator>>(std::basic_istream<CharT, Traits> &in,
-			engine<xtype1, itype1,
+			pcg_engine<xtype1, itype1,
 					output_mixin1, output_previous1,
 					stream_mixin1, multiplier_mixin1> &rng);
 };
@@ -507,7 +507,7 @@ template <typename CharT, typename Traits,
 		typename stream_mixin, typename multiplier_mixin>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> &out,
-		const engine<xtype, itype,
+		const pcg_engine<xtype, itype,
 				output_mixin, output_previous,
 				stream_mixin, multiplier_mixin> &rng) {
 	auto orig_flags = out.flags(std::ios_base::dec | std::ios_base::left);
@@ -529,7 +529,7 @@ template <typename CharT, typename Traits,
 		typename stream_mixin, typename multiplier_mixin>
 std::basic_istream<CharT, Traits> &
 operator>>(std::basic_istream<CharT, Traits> &in,
-		engine<xtype, itype,
+		pcg_engine<xtype, itype,
 				output_mixin, output_previous,
 				stream_mixin, multiplier_mixin> &rng) {
 	auto orig_flags = in.flags(std::ios_base::dec | std::ios_base::skipws);
@@ -560,7 +560,7 @@ operator>>(std::basic_istream<CharT, Traits> &in,
 template <typename xtype, typename itype,
 		typename output_mixin, bool output_previous,
 		typename stream_mixin, typename multiplier_mixin>
-itype engine<xtype, itype, output_mixin, output_previous, stream_mixin,
+itype pcg_engine<xtype, itype, output_mixin, output_previous, stream_mixin,
 		multiplier_mixin>::advance(itype state, itype delta, itype cur_mult, itype cur_plus) {
 	// The method used here is based on Brown, "Random Number Generation
 	// with Arbitrary Stride,", Transactions of the American Nuclear
@@ -589,7 +589,7 @@ itype engine<xtype, itype, output_mixin, output_previous, stream_mixin,
 template <typename xtype, typename itype,
 		typename output_mixin, bool output_previous,
 		typename stream_mixin, typename multiplier_mixin>
-itype engine<xtype, itype, output_mixin, output_previous, stream_mixin,
+itype pcg_engine<xtype, itype, output_mixin, output_previous, stream_mixin,
 		multiplier_mixin>::distance(itype cur_state, itype newstate, itype cur_mult, itype cur_plus, itype mask) {
 	constexpr itype ONE = 1u; // itype could be weird, so use constant
 	itype the_bit = stream_mixin::is_mcg ? itype(4u) : itype(1u);
@@ -611,14 +611,13 @@ template <typename xtype, typename itype,
 		typename output_mixin, bool output_previous,
 		typename stream_mixin_lhs, typename multiplier_mixin_lhs,
 		typename stream_mixin_rhs, typename multiplier_mixin_rhs>
-itype operator-(const engine<xtype, itype,
+itype operator-(const pcg_engine<xtype, itype,
 						output_mixin, output_previous,
 						stream_mixin_lhs, multiplier_mixin_lhs> &lhs,
-		const engine<xtype, itype,
+		const pcg_engine<xtype, itype,
 				output_mixin, output_previous,
 				stream_mixin_rhs, multiplier_mixin_rhs> &rhs) {
-	if (lhs.multiplier() != rhs.multiplier() || lhs.increment() != rhs.increment())
-		throw std::logic_error("incomparable generators");
+	ERR_FAIL_COND_V(lhs.multiplier() != rhs.multiplier() || lhs.increment() != rhs.increment(), -1);
 	return rhs.distance(lhs.state_);
 }
 
@@ -626,10 +625,10 @@ template <typename xtype, typename itype,
 		typename output_mixin, bool output_previous,
 		typename stream_mixin_lhs, typename multiplier_mixin_lhs,
 		typename stream_mixin_rhs, typename multiplier_mixin_rhs>
-bool operator==(const engine<xtype, itype,
+bool operator==(const pcg_engine<xtype, itype,
 						output_mixin, output_previous,
 						stream_mixin_lhs, multiplier_mixin_lhs> &lhs,
-		const engine<xtype, itype,
+		const pcg_engine<xtype, itype,
 				output_mixin, output_previous,
 				stream_mixin_rhs, multiplier_mixin_rhs> &rhs) {
 	return (lhs.multiplier() == rhs.multiplier()) && (lhs.increment() == rhs.increment()) && (lhs.state_ == rhs.state_);
@@ -639,10 +638,10 @@ template <typename xtype, typename itype,
 		typename output_mixin, bool output_previous,
 		typename stream_mixin_lhs, typename multiplier_mixin_lhs,
 		typename stream_mixin_rhs, typename multiplier_mixin_rhs>
-inline bool operator!=(const engine<xtype, itype,
+inline bool operator!=(const pcg_engine<xtype, itype,
 							   output_mixin, output_previous,
 							   stream_mixin_lhs, multiplier_mixin_lhs> &lhs,
-		const engine<xtype, itype,
+		const pcg_engine<xtype, itype,
 				output_mixin, output_previous,
 				stream_mixin_rhs, multiplier_mixin_rhs> &rhs) {
 	return !operator==(lhs, rhs);
@@ -651,28 +650,28 @@ inline bool operator!=(const engine<xtype, itype,
 template <typename xtype, typename itype,
 		template <typename XT, typename IT> class output_mixin,
 		bool output_previous = (sizeof(itype) <= 8)>
-using oneseq_base = engine<xtype, itype,
+using oneseq_base = pcg_engine<xtype, itype,
 		output_mixin<xtype, itype>, output_previous,
 		oneseq_stream<itype>>;
 
 template <typename xtype, typename itype,
 		template <typename XT, typename IT> class output_mixin,
 		bool output_previous = (sizeof(itype) <= 8)>
-using unique_base = engine<xtype, itype,
+using unique_base = pcg_engine<xtype, itype,
 		output_mixin<xtype, itype>, output_previous,
 		unique_stream<itype>>;
 
 template <typename xtype, typename itype,
 		template <typename XT, typename IT> class output_mixin,
 		bool output_previous = (sizeof(itype) <= 8)>
-using setseq_base = engine<xtype, itype,
+using setseq_base = pcg_engine<xtype, itype,
 		output_mixin<xtype, itype>, output_previous,
 		specific_stream<itype>>;
 
 template <typename xtype, typename itype,
 		template <typename XT, typename IT> class output_mixin,
 		bool output_previous = (sizeof(itype) <= 8)>
-using mcg_base = engine<xtype, itype,
+using mcg_base = pcg_engine<xtype, itype,
 		output_mixin<xtype, itype>, output_previous,
 		no_stream<itype>>;
 
